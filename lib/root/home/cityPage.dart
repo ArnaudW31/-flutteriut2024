@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
-import '../../db_helper.dart'; // Assurez-vous que le chemin d'accès correspond à votre structure de fichiers
-import '../../dto/city.dto.dart'; // Assurez-vous que le chemin d'accès correspond à votre structure de fichiers
+import '../../db_helper.dart';
+import '../../dto/city.dto.dart';
 
 class VilleScreen extends StatelessWidget {
-  final DbHelper helper = DbHelper.initDb();
 
-  VilleScreen({Key? key}) : super(key: key);
+  const VilleScreen({Key? key}) : super(key: key);
+
+  _onPressed(int posCity){
+    DbHelper.nbVille = posCity;
+    print(posCity);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Liste des Villes'),
-      ),
-      body: FutureBuilder<List<CityDTO>>(
-        future: helper.city(),
+
+    return FutureBuilder<List<CityDTO>>(
+        future: DbHelper.city(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(child: Text("Erreur lors du chargement"));
@@ -22,14 +23,26 @@ class VilleScreen extends StatelessWidget {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          final villes = snapshot.data!;
-          return SingleChildScrollView(
-            child: Column(
-              children: villes.map((ville) => ListTile(title: Text(ville.nom))).toList(),
-            ),
+          return ListView.builder(
+            itemCount: snapshot.data!.length,
+            itemBuilder: (_, int position) {
+              final item = snapshot.data![position];
+              //get your item data here ...
+              return ElevatedButton(
+                  child : Card(
+                    child: ListTile(
+                      title: Text(
+                        snapshot.data![position].nom),
+                  ),
+                ),
+                onPressed: () {
+                  _onPressed(position);
+                },
+              );
+            }
           );
         },
-      ),
     );
+    
   }
 }

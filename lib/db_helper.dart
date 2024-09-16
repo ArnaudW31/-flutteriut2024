@@ -1,10 +1,12 @@
 import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
 
 import '../dto/city.dto.dart';
 
 class DbHelper{
   static const String _dbName = 'city.db';
   static const int _dbVersion = 3;
+  static int nbVille = 0;
 
   static Database? _db;
 
@@ -12,7 +14,7 @@ class DbHelper{
     print('initDb');
     final String dbPath = await getDatabasesPath();
     final String path = dbPath + _dbName;
-    final Database database = await openDatabase(path,
+    final Database database = await openDatabase(join(await getDatabasesPath(), 'city_db.db'),
         version: _dbVersion, onCreate: _onCreate, onUpgrade: _onUpgrade);
     _db = database;
     var isOpen = _db?.isOpen;
@@ -22,15 +24,12 @@ class DbHelper{
 
 
 
-  static const String tableName = 'words';
+  static const String tableName = 'villes';
 
   static const String createTable = '''
   CREATE Table if not exists $tableName (
-    uid INTEGER PRIMARY KEY Not Null,
-    author varchar Not null,
-    content varchar Not null,
-    latitude REAL null,
-    longitude REAL null
+    id INTEGER PRIMARY KEY AUTOINCREMENT Not Null,
+    nom varchar Not null
   ) ''';
 
 
@@ -40,24 +39,25 @@ class DbHelper{
 
 
 
-  static  _onCreate(Database db, int version) {
-    db.execute(createTable);
+  static _onCreate(Database db, int version) {
+    return db.execute(createTable);
   }
 
   static _onUpgrade(Database db, int oldVersion, int newVersion) {
-    db.execute(dropTable);
+    return db.execute(dropTable);
 
     _onCreate(db, newVersion);
   }
 
   static void insert(CityDTO w){
+    nbVille++;
     final Map<String, dynamic> wordAsMap = w.toJson();
     _db!.insert(tableName, w.toJson());
   }
 
-  Future<List<CityDTO>> city() async {
+  static Future<List<CityDTO>> city() async {
     // Get a reference to the database.
-    final db = await _db;
+    final db = _db;
 
     // Query the table for all the dogs.
     final List<Map<String, Object?>> resultSet = await _db!.query(tableName);
@@ -68,10 +68,9 @@ class DbHelper{
     // Convert the list of each dog's fields into a list of `Dog` objects.
     return [
       for (final {
-      'id': id as int,
       'nom': nom as String,
       } in resultSet)
-        CityDTO(id: id, nom: nom,),
+        CityDTO(nom: nom,),
     ];
   }
 
